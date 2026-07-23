@@ -62,7 +62,7 @@
     }
   });
 
-  // Close on Escape Key
+  // Close on Escape
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') closeMenu();
   });
