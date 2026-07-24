@@ -72,6 +72,72 @@
     if (!isMobile()) closeMenu();
   });
 
+  // ---------------------------------------------------------------
+  // CONTACT FORM
+  // Destination inbox. Split into parts so basic scrapers don't harvest it.
+  // To change the recipient, edit these two values only.
+  var MAIL_USER = 'eze.2017';
+  var MAIL_HOST = 'yahoo.com';
+  // ---------------------------------------------------------------
+  var form = document.getElementById('contactForm');
+  if (form) {
+    var note = document.getElementById('cfNote');
+
+    function setNote(msg, kind) {
+      if (!note) return;
+      note.textContent = msg;
+      note.className = 'form-note' + (kind ? ' ' + kind : '');
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      var name = document.getElementById('cfName').value.trim();
+      var email = document.getElementById('cfEmail').value.trim();
+      var org = document.getElementById('cfOrg').value.trim();
+      var msg = document.getElementById('cfMsg').value.trim();
+
+      // Validate required fields
+      var missing = [];
+      if (!name) missing.push('cfName');
+      if (!email || email.indexOf('@') < 1 || email.indexOf('.') < 0) missing.push('cfEmail');
+      if (!msg) missing.push('cfMsg');
+
+      ['cfName', 'cfEmail', 'cfMsg'].forEach(function (id) {
+        document.getElementById(id).classList.toggle('invalid', missing.indexOf(id) !== -1);
+      });
+
+      if (missing.length) {
+        setNote('Please add your name, a valid email, and a message.', 'err');
+        document.getElementById(missing[0]).focus();
+        return;
+      }
+
+      // Compose the message
+      var subject = 'Website inquiry from ' + name + (org ? ' (' + org + ')' : '');
+      var body =
+        'Name: ' + name + '\n' +
+        'Email: ' + email + '\n' +
+        'Organization: ' + (org || 'Not provided') + '\n\n' +
+        'Message:\n' + msg + '\n\n' +
+        '— Sent from the HealthOps Advisory website contact form';
+
+      var to = MAIL_USER + '@' + MAIL_HOST;
+      var href = 'mailto:' + to +
+        '?subject=' + encodeURIComponent(subject) +
+        '&body=' + encodeURIComponent(body);
+
+      setNote('Opening your email app to send this message…', 'ok');
+      window.location.href = href;
+    });
+
+    // Clear the error state as the person corrects a field
+    ['cfName', 'cfEmail', 'cfMsg'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('input', function () { el.classList.remove('invalid'); });
+    });
+  }
+
   // On the Services page, scroll to and highlight a service when linked with a hash
   function flashHash() {
     var id = (location.hash || '').replace('#', '');
