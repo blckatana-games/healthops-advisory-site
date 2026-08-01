@@ -73,15 +73,16 @@
   });
 
   // ---------------------------------------------------------------
-  // CONTACT FORM
-  // Destination inbox. Split into parts so basic scrapers don't harvest it.
-  // To change the recipient, edit these two values only.
-  var MAIL_USER = 'eze.2017';
-  var MAIL_HOST = 'yahoo.com';
+  // CONTACT FORM — submits to Web3Forms via AJAX so the visitor
+  // stays on the page and sees an inline confirmation.
+  // The destination address is configured by the access_key in
+  // contact.html, not here.
   // ---------------------------------------------------------------
   var form = document.getElementById('contactForm');
   if (form) {
     var note = document.getElementById('cfNote');
+    var submitBtn = document.getElementById('cfSubmit');
+    var REQUIRED = ['cfName', 'cfEmail', 'cfMsg'];
 
     function setNote(msg, kind) {
       if (!note) return;
@@ -89,52 +90,73 @@
       note.className = 'form-note' + (kind ? ' ' + kind : '');
     }
 
+    function validEmail(v) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+    }
+
+    REQUIRED.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('input', function () { el.classList.remove('invalid'); });
+    });
+
     form.addEventListener('submit', function (e) {
       e.preventDefault();
 
       var name = document.getElementById('cfName').value.trim();
       var email = document.getElementById('cfEmail').value.trim();
-      var org = document.getElementById('cfOrg').value.trim();
       var msg = document.getElementById('cfMsg').value.trim();
 
-      // Validate required fields
+      // Client-side validation
       var missing = [];
       if (!name) missing.push('cfName');
-      if (!email || email.indexOf('@') < 1 || email.indexOf('.') < 0) missing.push('cfEmail');
+      if (!validEmail(email)) missing.push('cfEmail');
       if (!msg) missing.push('cfMsg');
 
-      ['cfName', 'cfEmail', 'cfMsg'].forEach(function (id) {
+      REQUIRED.forEach(function (id) {
         document.getElementById(id).classList.toggle('invalid', missing.indexOf(id) !== -1);
       });
 
       if (missing.length) {
-        setNote('Please add your name, a valid email, and a message.', 'err');
+        setNote('Please add your name, a valid email address, and a message.', 'err');
         document.getElementById(missing[0]).focus();
         return;
       }
 
-      // Compose the message
-      var subject = 'Website inquiry from ' + name + (org ? ' (' + org + ')' : '');
-      var body =
-        'Name: ' + name + '\n' +
-        'Email: ' + email + '\n' +
-        'Organization: ' + (org || 'Not provided') + '\n\n' +
-        'Message:\n' + msg + '\n\n' +
-        '— Sent from the HealthOps Advisory website contact form';
+      // Guard: access key not yet configured
+      var keyField = form.querySelector('[name="access_key"]');
+      if (!keyField || !keyField.value || keyField.value.indexOf('YOUR_ACCESS_KEY') === 0) {
+        setNote('This form is not finished being set up yet. Please email us directly in the meantime.', 'err');
+        return;
+      }
 
-      var to = MAIL_USER + '@' + MAIL_HOST;
-      var href = 'mailto:' + to +
-        '?subject=' + encodeURIComponent(subject) +
-        '&body=' + encodeURIComponent(body);
+      // Gather all named fields
+      var payload = {};
+      new FormData(form).forEach(function (v, k) { payload[k] = v; });
 
-      setNote('Opening your email app to send this message…', 'ok');
-      window.location.href = href;
-    });
+      var original = submitBtn ? submitBtn.textContent : '';
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending...'; }
+      setNote('Sending your message...', '');
 
-    // Clear the error state as the person corrects a field
-    ['cfName', 'cfEmail', 'cfMsg'].forEach(function (id) {
-      var el = document.getElementById(id);
-      if (el) el.addEventListener('input', function () { el.classList.remove('invalid'); });
+      fetch(form.action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(function (res) { return res.json().catch(function () { return {}; }); })
+        .then(function (data) {
+          if (data && data.success) {
+            form.reset();
+            setNote('Thank you \u2014 your message has been sent. We will be in touch shortly.', 'ok');
+          } else {
+            setNote((data && data.message) ? data.message : 'Something went wrong. Please try again, or email us directly.', 'err');
+          }
+        })
+        .catch(function () {
+          setNote('We could not reach the mail service. Please check your connection, or email us directly.', 'err');
+        })
+        .then(function () {
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = original; }
+        });
     });
   }
 

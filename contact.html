@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Instrument+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=7">
+<link rel="stylesheet" href="styles.css?v=8">
 </head>
 <body>
 <header class="nav">
@@ -68,26 +68,16 @@
       <div class="card" style="padding:28px;">
         <h3 style="font-size:1.15rem;margin-bottom:8px;">Send a note</h3>
         <p style="color:var(--muted);font-size:.92rem;margin-bottom:18px;">Tell us a little about your organization and what you&rsquo;d like to improve. We&rsquo;ll follow up promptly.</p>
-        <!--
-          CONTACT FORM DELIVERY
-          ---------------------
-          Current setup: submissions open the visitor's email app with the
-          message pre-filled and addressed to eze.2017@yahoo.com.
-          Recipient is set in main.js (MAIL_USER / MAIL_HOST).
 
-          To have messages delivered server-side instead (no email app needed),
-          replace the <form ...> tag below with:
+        <form class="cform" id="contactForm"
+              action="https://api.web3forms.com/submit" method="POST" novalidate>
 
-            <form class="cform" action="https://formsubmit.co/eze.2017@yahoo.com" method="POST">
-              <input type="hidden" name="_subject" value="Website inquiry - HealthOps Advisory">
-              <input type="hidden" name="_captcha" value="false">
-              <input type="hidden" name="_next" value="https://YOURDOMAIN.com/contact.html">
+          <input type="hidden" name="access_key" value="3f435001-ae75-4f39-b1a7-d85e014658a9">
+          <input type="hidden" name="subject" value="New inquiry from the HealthOps Advisory website">
+          <input type="hidden" name="from_name" value="HealthOps Advisory Website">
+          <!-- Spam honeypot: hidden from people, tempting to bots -->
+          <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off">
 
-          ...and delete the id="contactForm" attribute so the script stops
-          intercepting it. The first submission triggers a one-time
-          confirmation email to activate the address.
-        -->
-        <form class="cform" id="contactForm" novalidate>
           <label class="sr-only" for="cfName">Your name</label>
           <input id="cfName" name="name" placeholder="Your name" autocomplete="name" required>
 
@@ -100,7 +90,7 @@
           <label class="sr-only" for="cfMsg">How can we help?</label>
           <textarea id="cfMsg" name="message" placeholder="How can we help?" rows="4" required></textarea>
 
-          <button class="cta-btn" type="submit">Send message</button>
+          <button class="cta-btn" id="cfSubmit" type="submit">Send message</button>
           <p class="form-note" id="cfNote" role="status" aria-live="polite"></p>
         </form>
       </div>
@@ -142,6 +132,6 @@
     </div>
   </div>
 </footer>
-<script src="main.js?v=7"></script>
+<script src="main.js?v=8"></script>
 </body>
 </html>
